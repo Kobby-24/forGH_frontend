@@ -43,7 +43,32 @@ const PaymentSummary = ({ station }) => {
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <StatItem 
-              icon={<PercentIcon color="primary" />}
+              icon={null}
+              label="Total Songs Played"
+              value={`${totalLogs} songs`}
+              color={foreignPercentage > taxThreshold ? 'error.main' : 'success.main'}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <StatItem 
+              icon={<AttachMoneyIcon />}
+              label="Number of Local Songs"
+              value={`${station.contentLog.filter(log => log.origin === 'Local').length} songs`}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <StatItem 
+              icon={<AttachMoneyIcon color="error" />}
+              label="Number of Foreign Songs"
+              value={`${station.contentLog.filter(log => log.origin === 'Foreign').length} songs`}
+            />
+          </Grid>
+        </Grid>
+        <Divider sx={{ my: 2 }} />
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <StatItem 
+              icon={null}
               label="Foreign Content Percentage"
               value={`${foreignPercentage.toFixed(2)}%`}
               color={foreignPercentage > taxThreshold ? 'error.main' : 'success.main'}
