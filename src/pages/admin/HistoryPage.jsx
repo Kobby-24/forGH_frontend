@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, TextField } from '@mui/material';
+import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, TextField, TableSortLabel } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -26,6 +26,48 @@ const HistoryPage = () => {
              recordDate.getMonth() === filterDate.getMonth();
     });
   }, [station, filterDate]);
+
+  // --- Sorting helpers for the table ---
+  function descendingComparator(a, b, orderBy) {
+    const getValue = (obj) => {
+      if (orderBy === 'period') return new Date(obj.period).getTime();
+      if (orderBy === 'totalTax') return obj.summary?.totalTax ?? 0;
+      return String(obj[orderBy] || '').toLowerCase();
+    };
+
+    const va = getValue(a);
+    const vb = getValue(b);
+    if (vb < va) return -1;
+    if (vb > va) return 1;
+    return 0;
+  }
+
+  function getComparator(order, orderBy) {
+    return order === 'desc'
+      ? (a, b) => descendingComparator(a, b, orderBy)
+      : (a, b) => -descendingComparator(a, b, orderBy);
+  }
+
+  function stableSort(array, comparator) {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+      const orderRes = comparator(a[0], b[0]);
+      if (orderRes !== 0) return orderRes;
+      return a[1] - b[1];
+    });
+    return stabilizedThis.map((el) => el[0]);
+  }
+
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('period');
+
+  const handleRequestSort = (event, property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const sortedRecords = stableSort(filteredRecords.slice(), getComparator(order, orderBy));
 
   if (!station) { return <Typography sx={{ p: 3 }}>Station not found.</Typography>; }
 
@@ -53,13 +95,32 @@ const HistoryPage = () => {
       {/* --- HISTORY TABLE --- */}
       <TableContainer component={Paper}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}><TableRow><TableCell>Period</TableCell><TableCell>Status</TableCell><TableCell align="right">Total Tax Paid</TableCell><TableCell>Action</TableCell></TableRow></TableHead>
+          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+            <TableRow>
+              <TableCell sortDirection={orderBy === 'period' ? order : false}>
+                <TableSortLabel active={orderBy === 'period'} direction={orderBy === 'period' ? order : 'asc'} onClick={(e) => handleRequestSort(e, 'period')}>
+                  Period
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={orderBy === 'status' ? order : false}>
+                <TableSortLabel active={orderBy === 'status'} direction={orderBy === 'status' ? order : 'asc'} onClick={(e) => handleRequestSort(e, 'status')}>
+                  Status
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="right" sortDirection={orderBy === 'totalTax' ? order : false}>
+                <TableSortLabel active={orderBy === 'totalTax'} direction={orderBy === 'totalTax' ? order : 'asc'} onClick={(e) => handleRequestSort(e, 'totalTax')}>
+                  Total Tax Paid
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>Action</TableCell>
+            </TableRow>
+          </TableHead>
           <TableBody>
-            {filteredRecords.length > 0 ? filteredRecords.map(rec => (
+            {sortedRecords.length > 0 ? sortedRecords.map(rec => (
               <TableRow key={rec.periodId}>
                 <TableCell><strong>{rec.period}</strong></TableCell>
                 <TableCell><Chip label={rec.status} color="success" size="small" /></TableCell>
-                <TableCell align="right">GHS {rec.summary.totalTax.toLocaleString()}</TableCell>
+                <TableCell align="right">GHS {(rec.summary?.totalTax ?? 0).toLocaleString()}</TableCell>
                 <TableCell>
                   <Button component={Link} to={`/admin/station/${stationId}/history/${rec.periodId}`}>View Details</Button>
                 </TableCell>
