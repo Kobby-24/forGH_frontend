@@ -30,6 +30,7 @@ const StationCard = ({ station }) => {
           component={Link} 
           to={`/admin/station/${station.id}`} 
           size="small"
+          variant='outlined'
         >
           View Details & Reports
         </Button>
