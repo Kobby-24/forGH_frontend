@@ -17,7 +17,7 @@ const StationChart = ({ contentLog }) => {
   const COLORS = ['#00C49F', '#FF8042']; // Green for Local, Orange for Foreign
 
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card sx={{ height: '100%', width: 500, ml:3 }}>
       <CardContent>
         <Typography variant="h5" component="h3" gutterBottom>
           Content Origin Breakdown
