@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom'; // new
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Grid, Divider, Button } from '@mui/material';
+import { Box, Typography, Chip, Grid, Divider, Button } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 
 // Import our shared components and mock data
@@ -10,6 +10,7 @@ import { mockStations } from '../../mock/data';
 import StationChart from '../../components/StationChart';
 import PaymentSummary from '../../components/PaymentSummary';
 import PaymentForm from '../../components/PaymentForm';
+import EnhancedContentTable from '../../components/EnhancedContentTable';
 // We will build and use this component next
 // import PaymentForm from '../../components/PaymentForm'; 
 
@@ -49,13 +50,7 @@ const StationDashboard = () => {
     // you can add more behavior here: update UI, call an API, etc.
   };
 
-  // A helper function to format the timestamp (copied from StationDetails)
-  const formatTimestamp = (isoString) => {
-    const date = new Date(isoString);
-    return date.toLocaleString('en-US', { 
-      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-    });
-  };
+  // (table rendering handled by EnhancedContentTable)
 
   return (
     <Box sx={{ p: 3, flexGrow: 1 }}>
@@ -85,34 +80,7 @@ const StationDashboard = () => {
       <Divider sx={{ my: 4, mt: 4 }}><Chip label="YOUR DETAILED CONTENT LOG" /></Divider>
 
       {/* --- REUSING THE CONTENT LOG TABLE --- */}
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="station content log table">
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-            <TableRow>
-              <TableCell>Timestamp</TableCell>
-              <TableCell>Title</TableCell>
-              <TableCell>Artist</TableCell>
-              <TableCell>Origin</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {station.contentLog.map((log, index) => (
-              <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
-                <TableCell>{log.title}</TableCell>
-                <TableCell>{log.artist}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={log.origin}
-                    color={log.origin === 'Foreign' ? 'error' : 'success'}
-                    size="small"
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <EnhancedContentTable contentLog={station.contentLog} />
 
       {/* Payment dialog */}
       <PaymentForm
