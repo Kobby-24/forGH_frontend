@@ -1,8 +1,10 @@
 // src/pages/admin/StationDetails.jsx
 
 import React from 'react';
+// moved enhanced table into shared component
 import { useParams, Link } from 'react-router-dom';
-import { Box, Typography, Button, Container, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip } from '@mui/material'; // <-- Add Grid + table pieces
+import { Box, Typography, Button, Container, Grid } from '@mui/material'; // <-- Add Grid etc.
+// FilterListIcon removed — toolbar moved into shared table component
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HistoryIcon from '@mui/icons-material/History';
 
@@ -11,6 +13,10 @@ import { mockStations } from '../../mock/data';
 // --- IMPORT THE NEW COMPONENTS ---
 import StationChart from '../../components/StationChart';
 import PaymentSummary from '../../components/PaymentSummary';
+import EnhancedContentTable from '../../components/EnhancedContentTable';
+
+// enhanced table moved to shared component: src/components/EnhancedContentTable.jsx
+
 
 const StationDetails = () => {
   // 1. Get the 'id' from the URL (e.g., /admin/station/1 -> id will be '1')
@@ -38,17 +44,7 @@ const StationDetails = () => {
   }
 
 
-  // A helper function to format the timestamp
-  const formatTimestamp = (isoString) => {
-    const date = new Date(isoString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // (timestamp formatting is handled by the shared table component)
 
   return (
     <Box sx={{ p: 3, flexGrow: 1 }}>
@@ -82,34 +78,8 @@ const StationDetails = () => {
 
       
 
-      <TableContainer component={Paper} sx={{ mt: 4 }}>
-        <Table sx={{ minWidth: 650 }} aria-label="station content log table">
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-            <TableRow>
-              <TableCell>Timestamp</TableCell>
-              <TableCell>Title</TableCell>
-              <TableCell>Artist</TableCell>
-              <TableCell>Origin</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {station.contentLog.map((log, index) => (
-              <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
-                <TableCell>{log.title}</TableCell>
-                <TableCell>{log.artist}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={log.origin}
-                    color={log.origin === 'Foreign' ? 'error' : 'success'}
-                    size="small"
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+  {/* Enhanced sortable, paginated table */}
+  <EnhancedContentTable contentLog={station.contentLog} />
 
       {/* We will add Charts and Payment Summary here in the next steps */}
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
