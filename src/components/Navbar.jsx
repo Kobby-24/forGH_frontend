@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box, Autocomplete, TextField, useScrollTrigger, Slide } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Autocomplete, TextField, useScrollTrigger, Slide, Skeleton } from '@mui/material';
 import RadioIcon from '@mui/icons-material/Radio';
-import { mockStations } from '../mock/data';
+import useStations from '../hooks/useStations';
 
 // Hide on scroll helper (MUI pattern)
 function HideOnScroll(props) {
@@ -21,6 +21,7 @@ const Navbar = (props) => {
   const navigate = useNavigate();
   // Get user data from localStorage
   const user = JSON.parse(localStorage.getItem('user'));
+  const { stations, loading: stationsLoading } = useStations();
 
   const handleLogout = () => {
     // Clear user data from localStorage
@@ -55,29 +56,33 @@ const Navbar = (props) => {
             {/* Search stations by name in the middle of the appbar (admin only) */}
             {user?.role === 'admin' && (
               <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', color: 'white', borderColor: 'white', borderRadius: '100px' }}>
-                <Autocomplete
-                  size="small"
-                  sx={{ width: 500, color: 'white', borderColor: 'white', borderRadius: '100px' }}
-                  options={mockStations.map(s => ({ label: s.name, id: s.id }))}
-                  getOptionLabel={(option) => option.label || ''}
-                  noOptionsText="No stations found"
-                  onChange={(event, value) => {
-                    if (!value) return;
-                    const stationId = value.id;
-                    // Navigate depending on user role
-                    if (user?.role === 'admin') {
-                      navigate(`/admin/station/${stationId}`);
-                    } else if (user?.role === 'station') {
-                      navigate('/station/dashboard', { state: { stationId } });
-                    } else {
-                      // default to admin station view
-                      navigate(`/admin/station/${stationId}`);
-                    }
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} placeholder="Search stations..." variant="outlined" sx={{ backgroundColor: '#9da2a7ff', textColor: 'white', borderColor: 'white', borderRadius: '100px' }} />
-                  )}
-                />
+                {stationsLoading ? (
+                  <Skeleton variant="rectangular" width={500} height={40} />
+                ) : (
+                  <Autocomplete
+                    size="small"
+                    sx={{ width: 500, color: 'white', borderColor: 'white', borderRadius: '100px' }}
+                    options={(Array.isArray(stations) ? stations : []).map(s => ({ label: s.name, id: s.id }))}
+                    getOptionLabel={(option) => option.label || ''}
+                    noOptionsText={'No stations found'}
+                    onChange={(event, value) => {
+                      if (!value) return;
+                      const stationId = value.id;
+                      // Navigate depending on user role
+                      if (user?.role === 'admin') {
+                        navigate(`/admin/station/${stationId}`);
+                      } else if (user?.role === 'station') {
+                        navigate('/station/dashboard', { state: { stationId } });
+                      } else {
+                        // default to admin station view
+                        navigate(`/admin/station/${stationId}`);
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} placeholder="Search stations..." variant="outlined" sx={{ backgroundColor: '#9da2a7ff', textColor: 'white', borderColor: 'white', borderRadius: '100px' }} />
+                    )}
+                  />
+                )}
               </Box>
             )}
 

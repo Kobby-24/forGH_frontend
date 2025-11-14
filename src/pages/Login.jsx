@@ -2,37 +2,58 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Card, CardContent, Typography, TextField, Button, Alert } from '@mui/material';
-import { mockUsers } from '../mock/data';
+import { Box, Card, CardContent, Typography, TextField, Button, Alert, CircularProgress } from '@mui/material';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault(); // Prevent form from refreshing the page
     
-    // Find a user that matches the credentials
-    const foundUser = mockUsers.find(
-      (user) => user.username === username && user.password === password
-    );
+    setError('');
+    setLoading(true);
 
-    if (foundUser) {
-      setError('');
-      // Simulate setting a logged-in session
-      localStorage.setItem('user', JSON.stringify(foundUser));
+    try {
+      const response = await fetch('http://127.0.0.1:8000/users/login', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.detail || 'Invalid username or password.');
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+
+      // Store user data and token
+      localStorage.setItem('user', JSON.stringify(data));
+      localStorage.setItem('access_token', data.access_token);
 
       // Redirect based on role
-      if (foundUser.role === 'admin') {
+      if (data.role === 'admin') {
         navigate('/admin/dashboard');
-      } else if (foundUser.role === 'station') {
-        // Pass the stationId in the route's state
-        navigate('/station/dashboard', { state: { stationId: foundUser.stationId } });
+      } else if (data.role === 'station') {
+        navigate('/station/dashboard', { state: { stationId: data.station } });
       }
-    } else {
-      setError('Invalid username or password.');
+    } catch (err) {
+      setError('Failed to connect to the server. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,6 +85,7 @@ const LoginPage = () => {
               autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
             />
             <TextField
               margin="normal"
@@ -76,14 +98,16 @@ const LoginPage = () => {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
+              disabled={loading}
             >
-              Sign In
+              {loading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
           </Box>
         </CardContent>

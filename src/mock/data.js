@@ -1,24 +1,6 @@
 // ...existing code...
 
-export const mockUsers = [
-  {
-    username: 'admin',
-    password: 'password123',
-    role: 'admin',
-  },
-  {
-    username: 'peacefm',
-    password: 'password123',
-    role: 'station',
-    stationId: 1, // This links the user to Peace FM
-  },
-  {
-    username: 'citifm',
-    password: 'password123',
-    role: 'station',
-    stationId: 2, // This links the user to Citi FM
-  },
-];
+
 
 export const mockStations = [
   {

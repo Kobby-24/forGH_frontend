@@ -1,25 +1,21 @@
 // src/pages/admin/Dashboard.jsx
 
 import React, { useState } from 'react';
-import { Box, Typography, Button, Grid } from '@mui/material';
+import { Box, Typography, Button, Grid, Skeleton } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 // Import our mock data and the card component
-import { mockStations } from '../../mock/data';
+import useStations from '../../hooks/useStations';
 import StationCard from '../../components/StationCard';
 // We will uncomment this next
 import AddStationDialog from '../../components/AddStationDialog';
 
 const Dashboard = () => {
-  // We use state to hold our stations. Later, this will come from an API.
-  const [stations, setStations] = useState(mockStations);
+  // Fetch stations from backend
+  const { stations, setStations, loading, error } = useStations();
   const [openDialog, setOpenDialog] = useState(false); // State to control the dialog
 
-  const handleAddStation = (newStation) => {
-    // This function will add the new station to our list
-    // For now, it just adds to the state. We give it a temporary ID.
-    setStations([...stations, { ...newStation, id: stations.length + 1, contentLog: [] }]);
-  };
+
 
   return (
     <Box sx={{ p: 3, flexGrow: 1 }}>
@@ -39,20 +35,38 @@ const Dashboard = () => {
 
       {/* --- STATIONS GRID --- */}
       <Grid container spacing={2}>
-        {stations.map((station) => (
-          <Grid item key={station.id} xs={12} sm={6} md={4} lg={3}>
-            <StationCard station={station} />
-          </Grid>
-        ))}
+        {loading ? (
+          // show skeletons that resemble StationCard tiles
+          Array.from({ length: 8 }).map((_, i) => (
+            <Grid item key={i} xs={12} sm={6} md={4} lg={3}>
+              <Box sx={{ p: 1 }}>
+                <Skeleton variant="rectangular" height={140} animation="wave" />
+                <Skeleton width="60%" />
+                <Skeleton width="40%" />
+              </Box>
+            </Grid>
+          ))
+        ) : error ? (
+          <Grid item xs={12}><em>Error loading stations: {error}</em></Grid>
+        ) : (
+          stations.map((station) => (
+            <Grid item key={station.id} xs={12} sm={6} md={4} lg={3}>
+              <StationCard station={station} />
+            </Grid>
+          ))
+        )}
       </Grid>
       
       {/* --- ADD STATION DIALOG --- */}
       {/* We will build and import this component next */}
       <AddStationDialog 
-        open={openDialog} 
-        handleClose={() => setOpenDialog(false)}
-        handleAdd={handleAddStation}
-      /> 
+          open={openDialog} 
+          handleClose={() => setOpenDialog(false)}
+          handleAdd={(newStation) => {
+            // add locally to UI; backend syncing can be added later
+            setStations((prev) => [...prev, { ...newStation, id: (prev?.length ?? 0) + 1, contentLog: [] }]);
+          }}
+        /> 
      
     </Box>
   );

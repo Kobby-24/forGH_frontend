@@ -1,6 +1,7 @@
 // src/pages/admin/StationDetails.jsx
 
 import React from 'react';
+import { Skeleton } from '@mui/material';
 // moved enhanced table into shared component
 import { useParams, Link } from 'react-router-dom';
 import { Box, Typography, Button, Container, Grid } from '@mui/material'; // <-- Add Grid etc.
@@ -9,7 +10,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HistoryIcon from '@mui/icons-material/History';
 
 // Import our mock data
-import { mockStations } from '../../mock/data';
+import useStations from '../../hooks/useStations';
 // --- IMPORT THE NEW COMPONENTS ---
 import StationChart from '../../components/StationChart';
 import PaymentSummary from '../../components/PaymentSummary';
@@ -22,26 +23,34 @@ const StationDetails = () => {
   // 1. Get the 'id' from the URL (e.g., /admin/station/1 -> id will be '1')
   const { id } = useParams();
 
-  // 2. Find the station in our mock data that matches the id from the URL
-  // We use parseInt because the id from the URL is a string
-  const station = mockStations.find(s => s.id === parseInt(id));
+  // fetch stations
+  const { stations, loading, error } = useStations();
+  const station = loading ? null : stations.find(s => s.id === parseInt(id));
 
-  // 3. Handle case where no station is found for the given id
-  if (!station) {
-    return (
-      <Container sx={{ p: 3 }}>
-        <Typography variant="h5" color="error">Station not found!</Typography>
-        <Button 
-          component={Link} 
-          to="/admin/dashboard" 
-          variant="contained" 
-          sx={{ mt: 2 }}
-        >
-          Back to Dashboard
-        </Button>
-      </Container>
-    );
-  }
+  if (!station) return (
+    <Container sx={{ p: 3 }}>
+      <Skeleton variant="text" width={300} height={40} />
+      <Skeleton variant="text" width={200} />
+      <Skeleton variant="rectangular" height={220} sx={{ my: 2 }} />
+      <Skeleton variant="rectangular" height={40} />
+    </Container>
+  );
+  if (error) return <Container sx={{ p: 3 }}><Typography color="error">Error: {error}</Typography></Container>;
+  // if (!station) {
+  //   return (
+  //     <Container sx={{ p: 3 }}>
+  //       <Typography variant="h5" color="error">Station not found!</Typography>
+  //       <Button 
+  //         component={Link} 
+  //         to="/admin/dashboard" 
+  //         variant="contained" 
+  //         sx={{ mt: 2 }}
+  //       >
+  //         Back to Dashboard
+  //       </Button>
+  //     </Container>
+  //   );
+  // }
 
 
   // (timestamp formatting is handled by the shared table component)

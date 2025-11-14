@@ -1,28 +1,107 @@
 // src/pages/admin/UserManagement.jsx
 
-import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, InputAdornment, IconButton } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, InputAdornment, IconButton, Alert, Snackbar, Skeleton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
-import { mockUsers, mockStations } from '../../mock/data';
+import useStations from '../../hooks/useStations';
 import AddUserDialog from '../../components/AddUserDialog';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState(mockUsers);
-  const [stations] = useState(mockStations);
+  const [users, setUsers] = useState([]);
+  const { stations, loading: stationsLoading } = useStations();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState(null);
+
+  const fetchController = useRef(null);
+
+  const fetchUsers = async () => {
+    // abort any in-flight request
+    if (fetchController.current) fetchController.current.abort();
+    const controller = new AbortController();
+    fetchController.current = controller;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('http://127.0.0.1:8000/users/?skip=0&limit=100', {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      if (err.name === 'AbortError') return; // ignore aborts
+      setError(err.message || 'Failed to fetch users');
+    } finally {
+      setLoading(false);
+      fetchController.current = null;
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    return () => {
+      if (fetchController.current) fetchController.current.abort();
+    };
+  }, []);
+
+  const handleRetryFetch = () => fetchUsers();
   const [openDialog, setOpenDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('username');
 
-  const handleAddNewUser = (newUser) => {
-    // In a real app, this would be an API call. Here, we just update state.
-    setUsers([...users, newUser]);
+
+
+  const handleAddNewUser = async (newUser) => {
+    // POST the new user to the backend and append the returned user to state
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const payload = {
+        username: newUser.username,
+        password: newUser.password,
+        role: newUser.role,
+        // include email only if provided by the dialog
+        ...(newUser.email ? { email: newUser.email } : {}),
+        station: newUser.stationId ?? newUser.station?.id,
+      };
+      console.log('Creating user with payload:', payload);
+
+      const res = await fetch('http://127.0.0.1:8000/users/', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      const created = await res.json();
+      // append created user returned from server
+      setUsers((prev) => [...prev, created]);
+    } catch (err) {
+      console.error('Failed to create user', err);
+      setCreateError(err.message || 'Failed to create user');
+    } finally {
+      setCreating(false);
+    }
   };
   
   const getStationNameById = (id) => {
+    if (!Array.isArray(stations)) return 'N/A';
     const station = stations.find(s => s.id === id);
     return station ? station.name : 'N/A';
   };
@@ -32,7 +111,7 @@ const UserManagement = () => {
     const getValue = (obj) => {
       if (orderBy === 'username') return String(obj.username || '').toLowerCase();
       if (orderBy === 'role') return String(obj.role || '').toLowerCase();
-      if (orderBy === 'station') return String(getStationNameById(obj.stationId) || '').toLowerCase();
+      if (orderBy === 'station') return String(getStationNameById(obj.station?.id ?? obj.stationId) || '').toLowerCase();
       return '';
     };
     const va = getValue(a);
@@ -69,7 +148,7 @@ const UserManagement = () => {
     if (!q) return true;
     const username = String(u.username || '').toLowerCase();
     const role = String(u.role || '').toLowerCase();
-    const stationName = String(getStationNameById(u.stationId)).toLowerCase();
+    const stationName = String(getStationNameById(u.station?.id ?? u.stationId)).toLowerCase();
     return username.includes(q) || role.includes(q) || stationName.includes(q);
   });
 
@@ -104,15 +183,41 @@ const UserManagement = () => {
               ),
             }}
           />
-          <Button
-            variant="contained"
-            startIcon={<AddCircleOutlineIcon />}
-            onClick={() => setOpenDialog(true)}
-          >
-            Add New User
-          </Button>
+          {stationsLoading ? (
+            <Skeleton variant="rectangular" width={140} height={36} />
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={() => setOpenDialog(true)}
+            >
+              Add New User
+            </Button>
+          )}
         </Box>
       </Box>
+
+      {error && (
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={handleRetryFetch}>
+            Retry
+          </Button>
+        } sx={{ mb: 2 }}>
+          {`Failed to load users: ${error}`}
+        </Alert>
+      )}
+
+      {creating && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Creating user…
+        </Alert>
+      )}
+
+      <Snackbar open={!!createError} autoHideDuration={6000} onClose={() => setCreateError(null)}>
+        <Alert onClose={() => setCreateError(null)} severity="error" sx={{ width: '100%' }}>
+          {createError}
+        </Alert>
+      </Snackbar>
 
       <TableContainer component={Paper}>
         <Table>
@@ -141,13 +246,17 @@ const UserManagement = () => {
                 <TableRow key={index}>
                   <TableCell>{user.username}</TableCell>
                   <TableCell sx={{ textTransform: 'capitalize' }}>{user.role}</TableCell>
-                  <TableCell>{user.role === 'station' ? getStationNameById(user.stationId) : 'Admin'}</TableCell>
+                  <TableCell>{user.role === 'station' ? getStationNameById(user.station?.id ?? user.stationId) : 'Admin'}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={3} sx={{ textAlign: 'center', py: 4 }}>
-                  {users.length === 0 ? (
+                  {loading ? (
+                    <Typography color="text.secondary">Loading users…</Typography>
+                  ) : error ? (
+                    <Typography color="error">{`Error: ${error}`}</Typography>
+                  ) : users.length === 0 ? (
                     <Typography color="text.secondary">No users available.</Typography>
                   ) : (
                     <Typography color="text.secondary">No results found for "{searchQuery}".</Typography>

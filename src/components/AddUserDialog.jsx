@@ -6,6 +6,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, B
 const AddUserDialog = ({ open, handleClose, handleAddUser, stations }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [stationId, setStationId] = useState('');
   const [error, setError] = useState('');
 
@@ -18,6 +19,7 @@ const AddUserDialog = ({ open, handleClose, handleAddUser, stations }) => {
     const newUser = {
       username,
       password,
+      email: email,
       role: 'station', // Role is fixed for this form
       stationId: parseInt(stationId),
     };
@@ -31,6 +33,7 @@ const AddUserDialog = ({ open, handleClose, handleAddUser, stations }) => {
     setUsername('');
     setPassword('');
     setStationId('');
+    setEmail('');
     setError('');
     handleClose();
   };
@@ -58,6 +61,15 @@ const AddUserDialog = ({ open, handleClose, handleAddUser, stations }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={!!error && !password}
+          />
+          <TextField
+            margin="dense"
+            label="Email"
+            type="email"
+            fullWidth
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={!!error && !email}
           />
           <FormControl fullWidth margin="dense" error={!!error && !stationId}>
             <InputLabel id="station-select-label">Assign to Station</InputLabel>

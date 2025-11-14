@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom'; // new
-import { Box, Typography, Chip, Grid, Divider, Button } from '@mui/material';
+import { Box, Typography, Chip, Grid, Divider, Button, Skeleton } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 
 // Import our shared components and mock data
-import { mockStations } from '../../mock/data';
+import useStations from '../../hooks/useStations';
 import StationChart from '../../components/StationChart';
 import PaymentSummary from '../../components/PaymentSummary';
 import PaymentForm from '../../components/PaymentForm';
@@ -25,12 +25,29 @@ const StationDashboard = () => {
     }
   })();
   const stationId = location.state?.stationId ?? storedUser?.stationId ?? null;
-  const station = stationId ? mockStations.find(s => s.id === Number(stationId)) : null;
+  const { stations, loading, error } = useStations();
+  const station = loading ? null : (stationId ? stations.find(s => s.id === Number(stationId)) : null);
   const [openPayment, setOpenPayment] = useState(false);
 
-  if (!station) {
-    return <Typography sx={{ p: 3 }}>Station data not found. Please log in again.</Typography>;
-  }
+  if (!station) return (
+    <Box sx={{ p: 3 }}>
+      <Skeleton variant="text" width={300} height={40} />
+      <Skeleton variant="text" width={220} />
+      <Grid container spacing={4} sx={{ mb: 12 }}>
+        <Grid item xs={12} md={7}>
+          <Skeleton variant="rectangular" height={180} />
+        </Grid>
+        <Grid item xs={12} md={5}>
+          <Skeleton variant="rectangular" height={180} />
+        </Grid>
+      </Grid>
+      <Skeleton variant="rectangular" height={300} />
+    </Box>
+  );
+  if (error) return <Typography sx={{ p: 3 }} color="error">Error: {error}</Typography>;
+  // if (!station) {
+  //   return <Typography sx={{ p: 3 }}>Station data not found. Please log in again.</Typography>;
+  // }
 
   // --- Payment calculation (same logic as PaymentSummary) ---
   const totalLogs = Array.isArray(station.contentLog) ? station.contentLog.length : 0;

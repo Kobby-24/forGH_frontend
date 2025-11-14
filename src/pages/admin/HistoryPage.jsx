@@ -2,21 +2,23 @@
 
 import React, { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, TextField, TableSortLabel } from '@mui/material';
+import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, TextField, TableSortLabel, Skeleton } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { mockStations } from '../../mock/data';
+import useStations from '../../hooks/useStations';
 
 const HistoryPage = () => {
   const { stationId } = useParams();
   const navigate = useNavigate();
-  const station = mockStations.find(s => s.id === parseInt(stationId));
+  const { stations, loading, error } = useStations();
+  const station = loading ? null : stations.find(s => s.id === parseInt(stationId));
 
   const [filterDate, setFilterDate] = useState(null);
 
   const filteredRecords = useMemo(() => {
+    if (loading || error) return [];
     if (!station) return [];
     if (!filterDate) return station.historicalRecords; // Show all if no filter
 
@@ -25,7 +27,7 @@ const HistoryPage = () => {
       return recordDate.getFullYear() === filterDate.getFullYear() &&
              recordDate.getMonth() === filterDate.getMonth();
     });
-  }, [station, filterDate]);
+  }, [station, filterDate, loading, error]);
 
   // --- Sorting helpers for the table ---
   function descendingComparator(a, b, orderBy) {
@@ -69,7 +71,17 @@ const HistoryPage = () => {
 
   const sortedRecords = stableSort(filteredRecords.slice(), getComparator(order, orderBy));
 
-  if (!station) { return <Typography sx={{ p: 3 }}>Station not found.</Typography>; }
+  if (!station) return (
+    <Box sx={{ p: 3 }}>
+      <Skeleton variant="text" width={360} height={40} />
+      <Skeleton variant="rectangular" height={48} sx={{ my: 2 }} />
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Skeleton key={i} variant="rectangular" height={52} sx={{ mb: 1 }} />
+      ))}
+    </Box>
+  );
+  if (error) return <Typography sx={{ p: 3 }} color="error">Error: {error}</Typography>;
+  // if (!station) { return <Typography sx={{ p: 3 }}>Station not found.</Typography>; }
 
   return (
     <Box sx={{ p: 3, flexGrow: 1 }}>
