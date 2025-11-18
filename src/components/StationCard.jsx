@@ -5,9 +5,12 @@ import { Card, CardContent, Typography, CardActions, Button, Box } from '@mui/ma
 import { Link } from 'react-router-dom';
 
 const StationCard = ({ station }) => {
-  // A quick calculation for the summary
-  const totalLogs = station.contentLog.length;
-  const foreignLogs = station.contentLog.filter(log => log.origin === 'Foreign').length;
+  if (!station) return null;
+
+  // A quick calculation for the summary — defend against missing contentLog
+  const logs = Array.isArray(station.contentLog) ? station.contentLog : [];
+  const totalLogs = logs.length;
+  const foreignLogs = logs.filter((log) => log.origin === 'Foreign').length;
   const foreignPercentage = totalLogs > 0 ? ((foreignLogs / totalLogs) * 100).toFixed(1) : 0;
 
   return (
@@ -17,7 +20,7 @@ const StationCard = ({ station }) => {
           {station.name}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Base Tax: GHS {station.baseTax.toLocaleString()}
+          Base Tax: GHS {Number(station.baseTax ?? 0).toLocaleString()}
         </Typography>
         <Box sx={{ mt: 2, p: 1, backgroundColor: foreignPercentage > 30 ? '#fff0f0' : '#f0fff0', borderRadius: 1 }}>
             <Typography variant="body1">

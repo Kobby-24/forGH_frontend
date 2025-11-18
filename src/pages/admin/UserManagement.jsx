@@ -100,10 +100,52 @@ const UserManagement = () => {
     }
   };
   
+  const [stationNameCache, setStationNameCache] = useState({});
+  const stationFetchControllers = useRef({});
+
+  useEffect(() => {
+    const controllersSnapshot = stationFetchControllers.current;
+    return () => {
+      // abort any in-flight station fetches when unmounting
+      Object.values(controllersSnapshot).forEach((c) => {
+        try { c.abort(); } catch (e) {}
+      });
+    };
+  }, []);
+
+  const fetchStationById = async (id) => {
+    if (!id) return;
+    if (stationNameCache[id]) return;
+    if (stationFetchControllers.current[id]) return; // already fetching
+    const controller = new AbortController();
+    stationFetchControllers.current[id] = controller;
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/stations/${id}/export`, {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setStationNameCache((prev) => ({ ...prev, [id]: data?.name ?? 'N/A' }));
+    } catch (err) {
+      setStationNameCache((prev) => ({ ...prev, [id]: 'N/A' }));
+    } finally {
+      delete stationFetchControllers.current[id];
+    }
+  };
+
   const getStationNameById = (id) => {
-    if (!Array.isArray(stations)) return 'N/A';
-    const station = stations.find(s => s.id === id);
-    return station ? station.name : 'N/A';
+    if (!id) return 'N/A';
+    // prefer in-memory stations list if available
+    if (Array.isArray(stations)) {
+      const station = stations.find((s) => s.id === id);
+      if (station && station.name) return station.name;
+    }
+    if (stationNameCache[id]) return stationNameCache[id];
+    // trigger async fetch and return placeholder
+    fetchStationById(id);
+    return 'Loading...';
   };
 
   // sorting helpers
