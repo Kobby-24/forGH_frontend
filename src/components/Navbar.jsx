@@ -41,27 +41,57 @@ const Navbar = (props) => {
   return (
     <>
       <HideOnScroll {...props}>
-        <AppBar position="fixed" sx={{ backgroundColor: '#2c3e50', color: '#ecf0f1' }}>
+        <AppBar 
+          position="fixed" 
+          sx={{ 
+            backgroundColor: 'rgba(26, 26, 46, 0.75)',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 2px 20px rgba(0, 0, 0, 0.3)',
+            borderBottom: '1px solid rgba(168, 178, 196, 0.12)',
+            color: '#e8ecf1',
+          }}
+        >
           <Toolbar>
             <Typography
               variant="h6"
               component="div"
-              width={12}
-              sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', mr: 25 }}
+              sx={{ 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                mr: 25,
+                fontWeight: 600,
+                letterSpacing: '-0.5px',
+              }}
               onClick={handleTitleClick}
             >
-              <RadioIcon sx={{ mr: 2 }} /> Monitor
+              <RadioIcon sx={{ mr: 2, fontSize: 28 }} /> Monitor
             </Typography>
 
             {/* Search stations by name in the middle of the appbar (admin only) */}
             {user?.role === 'admin' && (
-              <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', color: 'white', borderColor: 'white', borderRadius: '100px' }}>
+              <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', color: 'white', borderRadius: '100px' }}>
                 {stationsLoading ? (
                   <Skeleton variant="rectangular" width={500} height={40} />
                 ) : (
                   <Autocomplete
                     size="small"
-                    sx={{ width: 500, color: 'white', borderColor: 'white', borderRadius: '100px' }}
+                    sx={{ 
+                      width: 500, 
+                      color: '#e8ecf1',
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'rgba(45, 53, 97, 0.5)',
+                        borderColor: 'rgba(168, 178, 196, 0.3)',
+                        '&:hover': {
+                          borderColor: 'rgba(168, 178, 196, 0.5)',
+                        },
+                        '&.Mui-focused': {
+                          borderColor: '#7b68ee',
+                          backgroundColor: 'rgba(45, 53, 97, 0.7)',
+                        },
+                      },
+                      borderRadius: '100px',
+                    }}
                     options={(Array.isArray(stations) ? stations : []).map(s => ({ label: s.name, id: s.id }))}
                     getOptionLabel={(option) => option.label || ''}
                     noOptionsText={'No stations found'}
@@ -79,7 +109,21 @@ const Navbar = (props) => {
                       }
                     }}
                     renderInput={(params) => (
-                      <TextField {...params} placeholder="Search stations..." variant="outlined" sx={{ backgroundColor: '#9da2a7ff', textColor: 'white', borderColor: 'white', borderRadius: '100px' }} />
+                      <TextField 
+                        {...params} 
+                        placeholder="Search stations..." 
+                        variant="outlined" 
+                        sx={{ 
+                          borderRadius: '100px',
+                          '& .MuiOutlinedInput-input': {
+                            color: '#e8ecf1',
+                            '&::placeholder': {
+                              color: '#a9b3c1',
+                              opacity: 0.7,
+                            },
+                          },
+                        }} 
+                      />
                     )}
                   />
                 )}
@@ -96,21 +140,51 @@ const Navbar = (props) => {
                     color="inherit"
                     component={Link}
                     to="/admin/users"
-                    sx={{ mr: 2 }}
+                    sx={{ 
+                      mr: 2,
+                      color: '#e8ecf1',
+                      fontWeight: 500,
+                      '&:hover': {
+                        backgroundColor: 'rgba(123, 104, 238, 0.2)',
+                      },
+                    }}
                   >
                     Manage Users
                   </Button>
                 )}
 
-                <Typography sx={{ mr: 2 }}>
+                <Typography sx={{ mr: 2, fontWeight: 500 }}>
                   Welcome, <strong>{user.username}</strong>
                 </Typography>
-                <Button color="inherit" onClick={handleLogout} variant="outlined">
+                <Button 
+                  color="inherit" 
+                  onClick={handleLogout} 
+                  variant="outlined"
+                  sx={{
+                    color: '#e8ecf1',
+                    borderColor: 'rgba(123, 104, 238, 0.5)',
+                    '&:hover': {
+                      borderColor: '#7b68ee',
+                      backgroundColor: 'rgba(123, 104, 238, 0.1)',
+                    },
+                  }}
+                >
                   Logout
                 </Button>
               </Box>
             ) : (
-              <Button color="inherit" component={Link} to="/login">
+              <Button 
+                color="inherit" 
+                component={Link} 
+                to="/login"
+                sx={{
+                  color: '#e8ecf1',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(123, 104, 238, 0.2)',
+                  },
+                }}
+              >
                 Login
               </Button>
             )}

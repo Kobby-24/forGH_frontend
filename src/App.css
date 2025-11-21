@@ -1,38 +1,151 @@
 .App {
-  text-align: center;
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e34 5%, #0f0f1e1e 10%);
+  background-attachment: fixed;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.App-logo {
-  height: 40vmin;
+/* Background image container - positioned behind content */
+.App::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('radio.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  z-index: -1;
+  filter: brightness(0.4) contrast(1.1);
+}
+
+/* Overlay to enhance transparency effect */
+.App::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(15, 15, 30, 0.144) 0%, rgba(26, 26, 46, 0.2) 5%, rgba(15, 15, 30, 0.3) 10%);
+  z-index: -1;
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+/* Main content wrapper */
+.App > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Page container for consistent padding and layout */
+.page-container {
+  flex: 1;
+  padding: 32px;
+  max-width: 1920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #e8ecf1;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: #a9b3c1;
+  font-weight: 400;
+  letter-spacing: 0.25px;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+/* Responsive design adjustments */
+@media (max-width: 1200px) {
+  .page-container {
+    padding: 24px;
+  }
+
+  .page-title {
+    font-size: 2rem;
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+  }
+}
+
+/* Utility classes for common patterns */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.flex-center {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.glass-effect {
+  background-color: rgba(26, 26, 46, 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(168, 178, 196, 0.12);
+}
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
   }
-  to {
-    transform: rotate(360deg);
+  100% {
+    background-position: 1000px 0;
   }
 }
+
+.skeleton-loading {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(45, 53, 97, 0.4) 25%,
+    rgba(45, 53, 97, 0.6) 50%,
+    rgba(45, 53, 97, 0.4) 75%
+  );
+  background-size: 1000px 100%;
+}
+

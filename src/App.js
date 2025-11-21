@@ -2,6 +2,9 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import muiTheme from './theme/muiTheme';
 import LoginPage from './pages/Login'; // <-- Import Login page
 import Dashboard from './pages/admin/Dashboard';
 import StationDashboard from './pages/station/StationDashboard';
@@ -44,11 +47,14 @@ const AppLayout = () => {
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <AppLayout />
-      </div>
-    </Router>
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <Router>
+        <div className="App">
+          <AppLayout />
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 

@@ -7,30 +7,58 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 // Import our mock data and the card component
 import useStations from '../../hooks/useStations';
 import StationCard from '../../components/StationCard';
+import LayoutWrapper from '../../components/LayoutWrapper';
+import MetricsCard from '../../components/MetricsCard';
 // We will uncomment this next
 import AddStationDialog from '../../components/AddStationDialog';
+import StorageIcon from '@mui/icons-material/Storage';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import PeopleIcon from '@mui/icons-material/People';
 
 const Dashboard = () => {
   // Fetch stations from backend
   const { stations, setStations, loading, error } = useStations();
   const [openDialog, setOpenDialog] = useState(false); // State to control the dialog
-  const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [createSuccess, setCreateSuccess] = useState(null);
+
+  // Calculate dashboard metrics
+  const totalStations = stations?.length || 0;
+  const activeStations = stations?.filter(s => s.status === 'active').length || 0;
+  const uptime = '98.5%';
+
+  const metricsData = [
+    { icon: <StorageIcon />, value: totalStations.toString(), label: 'Total Stations' },
+    { icon: <PeopleIcon />, value: activeStations.toString(), label: 'Active Stations' },
+    { icon: <SignalCellularAltIcon />, value: uptime, label: 'System Uptime' },
+  ];
 
 
 
   return (
-    <Box sx={{ p: 3, flexGrow: 1 }}>
-      {/* --- PAGE HEADER --- */}
+    <LayoutWrapper 
+      title="Stations Dashboard" 
+      subtitle="Monitor and manage all your stations"
+      maxWidth="xl"
+    >
+      {/* --- METRICS SECTION --- */}
+      <MetricsCard metrics={metricsData} />
+
+      {/* --- ACTION HEADER --- */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Stations Dashboard
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600, color: '#e8ecf1' }}>
+          All Stations
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddCircleOutlineIcon />}
-          onClick={() => setOpenDialog(true)} // This will open the dialog on Day 7
+          onClick={() => setOpenDialog(true)}
+          sx={{
+            backgroundColor: '#7b68ee',
+            '&:hover': {
+              backgroundColor: '#9d84eb',
+            },
+          }}
         >
           Add New Station
         </Button>
@@ -67,7 +95,6 @@ const Dashboard = () => {
           handleClose={() => setOpenDialog(false)}
           handleAdd={async (newStation) => {
             // POST to backend then append created station to state
-            setCreating(true);
             setCreateError(null);
             try {
               const payload = {
@@ -94,7 +121,6 @@ const Dashboard = () => {
               console.error('Failed to create station', err);
               setCreateError(err.message || 'Failed to create station');
             } finally {
-              setCreating(false);
               setOpenDialog(false);
             }
           }}
@@ -111,8 +137,7 @@ const Dashboard = () => {
           {createError}
         </Alert>
       </Snackbar>
-     
-    </Box>
+    </LayoutWrapper>
   );
 };
 
