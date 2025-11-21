@@ -83,7 +83,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/users/login', {
+      const response = await fetch('https://forgh-457a24871359.herokuapp.com/users/login', {
         method: 'POST',
         headers: {
           'accept': 'application/json',

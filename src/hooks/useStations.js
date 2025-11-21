@@ -17,7 +17,7 @@ export default function useStations() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://127.0.0.1:8000/stations/', {
+      const res = await fetch('https://forgh-457a24871359.herokuapp.com/stations/', {
         method: 'GET',
         headers: { accept: 'application/json' },
         signal: controller.signal,

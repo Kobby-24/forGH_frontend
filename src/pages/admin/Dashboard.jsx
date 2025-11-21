@@ -102,7 +102,7 @@ const Dashboard = () => {
                 url: newStation.streamUrl,
                 base_tax: Number(newStation.baseTax),
               };
-              const res = await fetch('http://127.0.0.1:8000/stations/', {
+              const res = await fetch('https://forgh-457a24871359.herokuapp.com/stations/', {
                 method: 'POST',
                 headers: {
                   accept: 'application/json',

@@ -28,7 +28,7 @@ const UserManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://127.0.0.1:8000/users/?skip=0&limit=100', {
+      const res = await fetch('https://forgh-457a24871359.herokuapp.com/users/?skip=0&limit=100', {
         method: 'GET',
         headers: { accept: 'application/json' },
         signal: controller.signal,
@@ -75,7 +75,7 @@ const UserManagement = () => {
       };
       console.log('Creating user with payload:', payload);
 
-      const res = await fetch('http://127.0.0.1:8000/users/', {
+      const res = await fetch('https://forgh-457a24871359.herokuapp.com/users/', {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -120,7 +120,7 @@ const UserManagement = () => {
     const controller = new AbortController();
     stationFetchControllers.current[id] = controller;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/stations/${id}/export`, {
+      const res = await fetch(`https://forgh-457a24871359.herokuapp.com/stations/${id}/export`, {
         method: 'GET',
         headers: { accept: 'application/json' },
         signal: controller.signal,
