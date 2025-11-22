@@ -1,10 +1,12 @@
 // src/pages/admin/UserManagement.jsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, InputAdornment, IconButton, Alert, Snackbar, Skeleton } from '@mui/material';
+import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, InputAdornment, IconButton, Alert, Snackbar, Skeleton, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import useStations from '../../hooks/useStations';
 import AddUserDialog from '../../components/AddUserDialog';
@@ -16,8 +18,26 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('username');
 
+  // Edit modal state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Delete modal state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedUserForDelete, setSelectedUserForDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Refs
   const fetchController = useRef(null);
+  const [stationNameCache, setStationNameCache] = useState({});
+  const stationFetchControllers = useRef({});
 
   const fetchUsers = async () => {
     // abort any in-flight request
@@ -53,10 +73,18 @@ const UserManagement = () => {
   }, []);
 
   const handleRetryFetch = () => fetchUsers();
-  const [openDialog, setOpenDialog] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('username');
+
+  const getLoggedInUser = () => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        return JSON.parse(user).username;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  };
 
 
 
@@ -92,6 +120,7 @@ const UserManagement = () => {
       const created = await res.json();
       // append created user returned from server
       setUsers((prev) => [...prev, created]);
+      setOpenDialog(false);
     } catch (err) {
       console.error('Failed to create user', err);
       setCreateError(err.message || 'Failed to create user');
@@ -99,9 +128,118 @@ const UserManagement = () => {
       setCreating(false);
     }
   };
-  
-  const [stationNameCache, setStationNameCache] = useState({});
-  const stationFetchControllers = useRef({});
+
+  const handleEditUserClick = (user) => {
+    setSelectedUserForEdit(user);
+    setEditFormData({
+      email: user.email || '',
+      username: user.username || '',
+      role: user.role || '',
+      station: user.station?.id || '',
+      password: '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    const loggedInUser = getLoggedInUser();
+    if (!loggedInUser) {
+      alert('Unable to determine logged-in user');
+      return;
+    }
+
+    if (!selectedUserForEdit) return;
+
+    setEditLoading(true);
+    try {
+      const payload = {};
+      if (editFormData.email && editFormData.email !== selectedUserForEdit.email) {
+        payload.email = editFormData.email;
+      }
+      if (editFormData.username && editFormData.username !== selectedUserForEdit.username) {
+        payload.username = editFormData.username;
+      }
+      if (editFormData.role && editFormData.role !== selectedUserForEdit.role) {
+        payload.role = editFormData.role;
+      }
+      if (editFormData.station && editFormData.station !== (selectedUserForEdit.station?.id || '')) {
+        payload.station = editFormData.station;
+      }
+      if (editFormData.password) {
+        payload.password = editFormData.password;
+      }
+
+      const res = await fetch(
+        `https://forgh-457a24871359.herokuapp.com/users/${selectedUserForEdit.username}/${loggedInUser}`,
+        {
+          method: 'PUT',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      const updated = await res.json();
+      setUsers((prev) =>
+        prev.map((u) => (u.id === updated.id ? updated : u))
+      );
+      setEditDialogOpen(false);
+      setSelectedUserForEdit(null);
+      setEditFormData({});
+    } catch (err) {
+      console.error('Failed to update user', err);
+      alert(`Failed to update user: ${err.message}`);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteUserClick = (user) => {
+    setSelectedUserForDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    const loggedInUser = getLoggedInUser();
+    if (!loggedInUser) {
+      alert('Unable to determine logged-in user');
+      return;
+    }
+
+    if (!selectedUserForDelete) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(
+        `https://forgh-457a24871359.herokuapp.com/users/${selectedUserForDelete.username}/${loggedInUser}`,
+        {
+          method: 'DELETE',
+          headers: { 'accept': 'application/json' },
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      setUsers((prev) => prev.filter((u) => u.id !== selectedUserForDelete.id));
+      setDeleteDialogOpen(false);
+      setSelectedUserForDelete(null);
+    } catch (err) {
+      console.error('Failed to delete user', err);
+      alert(`Failed to delete user: ${err.message}`);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   useEffect(() => {
     const controllersSnapshot = stationFetchControllers.current;
@@ -280,6 +418,7 @@ const UserManagement = () => {
                   Assigned Station
                 </TableSortLabel>
               </TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -289,11 +428,21 @@ const UserManagement = () => {
                   <TableCell>{user.username}</TableCell>
                   <TableCell sx={{ textTransform: 'capitalize' }}>{user.role}</TableCell>
                   <TableCell>{user.role === 'station' ? getStationNameById(user.station?.id ?? user.stationId) : 'Admin'}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton size="small" color="warning" onClick={() => handleEditUserClick(user)} title="Edit user">
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => handleDeleteUserClick(user)} title="Delete user">
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} sx={{ textAlign: 'center', py: 4 }}>
+                <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
                   {loading ? (
                     <Typography color="text.secondary">Loading users…</Typography>
                   ) : error ? (
@@ -316,6 +465,90 @@ const UserManagement = () => {
         handleAddUser={handleAddNewUser}
         stations={stations}
       />
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => !editLoading && setEditDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Edit User</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <TextField
+              label="Username"
+              value={editFormData.username || ''}
+              onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
+              fullWidth
+              disabled
+            />
+            <TextField
+              label="Email"
+              value={editFormData.email || ''}
+              onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+              fullWidth
+              type="email"
+            />
+            <TextField
+              label="Password"
+              value={editFormData.password || ''}
+              onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+              fullWidth
+              type="password"
+              placeholder="Leave blank to keep current password"
+            />
+            <FormControl fullWidth>
+              <InputLabel>Role</InputLabel>
+              <Select
+                value={editFormData.role || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                label="Role"
+              >
+                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="station">Station</MenuItem>
+              </Select>
+            </FormControl>
+            {editFormData.role === 'station' && (
+              <FormControl fullWidth>
+                <InputLabel>Assigned Station</InputLabel>
+                <Select
+                  value={editFormData.station || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, station: e.target.value })}
+                  label="Assigned Station"
+                >
+                  {stations.map((station) => (
+                    <MenuItem key={station.id} value={station.id}>
+                      {station.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)} disabled={editLoading}>
+            Cancel
+          </Button>
+          <Button onClick={handleEditSubmit} variant="contained" disabled={editLoading}>
+            {editLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => !deleteLoading && setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete user <strong>{selectedUserForDelete?.username}</strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={deleteLoading}>
+            {deleteLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
