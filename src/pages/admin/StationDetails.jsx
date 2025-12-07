@@ -27,6 +27,22 @@ const StationDetails = () => {
   const { stations, loading, error } = useStations();
   const station = loading ? null : stations.find(s => s.id === parseInt(id));
 
+  // Filter content log to show only this month's entries
+  const getThisMonthContentLog = (contentLog) => {
+    if (!Array.isArray(contentLog)) return [];
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    return contentLog.filter(log => {
+      const logDate = new Date(log.timestamp);
+      return logDate.getFullYear() === currentYear && logDate.getMonth() === currentMonth;
+    });
+  };
+
+  const thisMonthContentLog = station ? getThisMonthContentLog(station.contentLog) : [];
+
   if (!station) return (
     <Container sx={{ p: 3 }}>
       <Skeleton variant="text" width={300} height={40} />
@@ -78,17 +94,22 @@ const StationDetails = () => {
       {/* --- ADD THE NEW ANALYSIS SECTION --- */}
       <Grid container spacing={4} sx={{ mb: 4 }}>
         <Grid item xs={12} md={7}>
-          <PaymentSummary station={station} />
+          <PaymentSummary station={station} contentLog={thisMonthContentLog} />
         </Grid>
         <Grid item xs={12} md={5}>
-          <StationChart contentLog={station.contentLog} />
+          <StationChart contentLog={thisMonthContentLog} />
         </Grid>
       </Grid>
 
-      
+      {/* This Month's Content Log */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" fontWeight="bold">
+          Songs Played This Month ({new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })})
+        </Typography>
+      </Box>
 
   {/* Enhanced sortable, paginated table */}
-  <EnhancedContentTable contentLog={station.contentLog} />
+  <EnhancedContentTable contentLog={thisMonthContentLog} />
 
       {/* We will add Charts and Payment Summary here in the next steps */}
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>

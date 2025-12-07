@@ -6,11 +6,14 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PercentIcon from '@mui/icons-material/Percent';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
-const PaymentSummary = ({ station }) => {
+const PaymentSummary = ({ station, contentLog }) => {
+  // Use the provided contentLog (filtered) or fall back to station.contentLog
+  const logToUse = contentLog || station.contentLog;
+  
   // --- Calculation Logic ---
   const taxThreshold = 30; // 30%
-  const totalLogs = station.contentLog.length;
-  const foreignLogs = station.contentLog.filter(log => log.origin === 'Foreign').length;
+  const totalLogs = logToUse.length;
+  const foreignLogs = logToUse.filter(log => log.origin === 'Foreign').length;
   
   const foreignPercentage = totalLogs > 0 ? (foreignLogs / totalLogs) * 100 : 0;
 
@@ -53,14 +56,14 @@ const PaymentSummary = ({ station }) => {
             <StatItem 
               icon={<AttachMoneyIcon />}
               label="Number of Local Songs"
-              value={`${station.contentLog.filter(log => log.origin === 'Local').length} songs`}
+              value={`${logToUse.filter(log => log.origin === 'Local').length} songs`}
             />
           </Grid>
           <Grid item xs={6}>
             <StatItem 
               icon={<AttachMoneyIcon color="error" />}
               label="Number of Foreign Songs"
-              value={`${station.contentLog.filter(log => log.origin === 'Foreign').length} songs`}
+              value={`${logToUse.filter(log => log.origin === 'Foreign').length} songs`}
             />
           </Grid>
         </Grid>
