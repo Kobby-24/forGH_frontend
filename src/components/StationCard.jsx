@@ -39,11 +39,8 @@ const StyledCard = styled(Card)(({ theme }) => ({
 const StationCard = ({ station }) => {
   if (!station) return null;
 
-  // A quick calculation for the summary — defend against missing contentLog
-  const logs = Array.isArray(station.contentLog) ? station.contentLog : [];
-  const totalLogs = logs.length;
-  const foreignLogs = logs.filter((log) => log.origin === 'Foreign').length;
-  const foreignPercentage = totalLogs > 0 ? ((foreignLogs / totalLogs) * 100).toFixed(1) : 0;
+  // Use pre-computed value from backend
+  const foreignPercentage = station.foreignPercentage || 0;
 
   return (
     <StyledCard>

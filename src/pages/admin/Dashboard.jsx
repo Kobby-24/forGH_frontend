@@ -4,21 +4,19 @@ import React, { useState } from 'react';
 import { Box, Typography, Button, Grid, Skeleton, Snackbar, Alert } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
-// Import our mock data and the card component
-import useStations from '../../hooks/useStations';
+import { useDashboardSummary } from '../../hooks/useStations';
 import StationCard from '../../components/StationCard';
 import LayoutWrapper from '../../components/LayoutWrapper';
 import MetricsCard from '../../components/MetricsCard';
-// We will uncomment this next
 import AddStationDialog from '../../components/AddStationDialog';
 import StorageIcon from '@mui/icons-material/Storage';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import PeopleIcon from '@mui/icons-material/People';
 
 const Dashboard = () => {
-  // Fetch stations from backend
-  const { stations, setStations, loading, error } = useStations();
-  const [openDialog, setOpenDialog] = useState(false); // State to control the dialog
+  // Fetch dashboard summary from backend
+  const { stations, setStations, loading, error } = useDashboardSummary();
+  const [openDialog, setOpenDialog] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [createSuccess, setCreateSuccess] = useState(null);
 
@@ -32,8 +30,6 @@ const Dashboard = () => {
     { icon: <PeopleIcon />, value: activeStations.toString(), label: 'Active Stations' },
     { icon: <SignalCellularAltIcon />, value: uptime, label: 'System Uptime' },
   ];
-
-
 
   return (
     <LayoutWrapper 
@@ -89,7 +85,6 @@ const Dashboard = () => {
       </Grid>
       
       {/* --- ADD STATION DIALOG --- */}
-      {/* We will build and import this component next */}
       <AddStationDialog 
           open={openDialog} 
           handleClose={() => setOpenDialog(false)}

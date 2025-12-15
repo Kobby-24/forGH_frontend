@@ -1,21 +1,19 @@
 // src/pages/station/StationDashboard.jsx
 
 import React, { useState } from 'react';
-import { useLocation, Link } from 'react-router-dom'; // new
-import { Box, Typography, Chip, Grid, Divider, Button, Skeleton } from '@mui/material';
+import { useLocation, Link } from 'react-router-dom';
+import { Box, Typography, Chip, Grid, Divider, Button, Skeleton, Container } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 
-// Import our shared components and mock data
-import useStations from '../../hooks/useStations';
+// Import our shared components
+import { useStationById } from '../../hooks/useStations';
 import StationChart from '../../components/StationChart';
 import PaymentSummary from '../../components/PaymentSummary';
 import PaymentForm from '../../components/PaymentForm';
 import EnhancedContentTable from '../../components/EnhancedContentTable';
-// We will build and use this component next
-// import PaymentForm from '../../components/PaymentForm'; 
 
 const StationDashboard = () => {
-  // Determine which station to show: first from route state, then from stored user, else null
+  // Determine which station to show: first from route state, then from stored user
   const location = useLocation();
   const storedUser = (() => {
     try {
@@ -24,12 +22,32 @@ const StationDashboard = () => {
       return null;
     }
   })();
-  const stationId = location.state?.stationId ?? storedUser?.stationId ?? null;
-  const { stations, loading, error } = useStations();
-  const station = loading ? null : (stationId ? stations.find(s => s.id === Number(stationId)) : null);
+  
+  const stationId = location.state?.stationId ?? storedUser?.station?.id ?? null;
+  
+  // Fetch ONLY this specific station (same as StationDetails)
+  const { station, loading, error } = useStationById(stationId ? parseInt(stationId) : null);
+  
   const [openPayment, setOpenPayment] = useState(false);
 
-  if (!station) return (
+  // Filter content log to show only this month's entries
+  const getThisMonthContentLog = (contentLog) => {
+    if (!Array.isArray(contentLog)) return [];
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    return contentLog.filter(log => {
+      const logDate = new Date(log.timestamp);
+      return logDate.getFullYear() === currentYear && logDate.getMonth() === currentMonth;
+    });
+  };
+
+  const thisMonthContentLog = station ? getThisMonthContentLog(station.contentLog) : [];
+
+  // Show loading state
+  if (loading || !station) return (
     <Box sx={{ p: 3 }}>
       <Skeleton variant="text" width={300} height={40} />
       <Skeleton variant="text" width={220} />
@@ -44,12 +62,30 @@ const StationDashboard = () => {
       <Skeleton variant="rectangular" height={300} />
     </Box>
   );
-  if (error) return <Typography sx={{ p: 3 }} color="error">Error: {error}</Typography>;
-  // if (!station) {
-  //   return <Typography sx={{ p: 3 }}>Station data not found. Please log in again.</Typography>;
-  // }
 
-  // --- Payment calculation (same logic as PaymentSummary) ---
+  // Show error state
+  if (error) return (
+    <Container sx={{ p: 3 }}>
+      <Typography color="error">Error: {error}</Typography>
+    </Container>
+  );
+
+  // Show not found state
+  // if (!station) return (
+  //   <Container sx={{ p: 3 }}>
+  //     <Typography variant="h5" color="error">Station data not found. Please log in again.</Typography>
+  //     <Button 
+  //       component={Link} 
+  //       to="/station/dashboard" 
+  //       variant="contained" 
+  //       sx={{ mt: 2 }}
+  //     >
+  //       Back to Dashboard
+  //     </Button>
+  //   </Container>
+  // );
+
+  // --- Payment calculation ---
   const totalLogs = Array.isArray(station.contentLog) ? station.contentLog.length : 0;
   const foreignLogs = Array.isArray(station.contentLog) ? station.contentLog.filter(log => log.origin === 'Foreign').length : 0;
   const foreignPercentage = totalLogs > 0 ? (foreignLogs / totalLogs) * 100 : 0;
@@ -67,8 +103,6 @@ const StationDashboard = () => {
     // you can add more behavior here: update UI, call an API, etc.
   };
 
-  // (table rendering handled by EnhancedContentTable)
-
   return (
     <Box sx={{ p: 3, flexGrow: 1 }}>
       {/* --- PAGE HEADER --- */}
@@ -84,20 +118,20 @@ const StationDashboard = () => {
       {/* --- REUSING THE ANALYSIS COMPONENTS --- */}
       <Grid container spacing={4} sx={{ mb: 12 }}>
         <Grid item xs={12} md={7}>
-          <PaymentSummary station={station} />
+          <PaymentSummary station={station} contentLog={thisMonthContentLog} />
           <Button variant="contained" size="large" sx={{ mt: 2, width: '100%' }} onClick={handleOpenPayment}>
             Proceed to Payment
           </Button>
         </Grid>
         <Grid item xs={12} md={5}>
-          <StationChart contentLog={station.contentLog} />
+          <StationChart contentLog={thisMonthContentLog} />
         </Grid>
       </Grid>
 
-      <Divider sx={{ my: 4, mt: 4 }}><Chip label="YOUR DETAILED CONTENT LOG" /></Divider>
+      <Divider sx={{ my: 4, mt: 4 }}><Chip label="YOUR DETAILED CONTENT LOG THIS MONTH" /></Divider>
 
       {/* --- REUSING THE CONTENT LOG TABLE --- */}
-      <EnhancedContentTable contentLog={station.contentLog} />
+      <EnhancedContentTable contentLog={thisMonthContentLog} />
 
       {/* Payment dialog */}
       <PaymentForm
@@ -106,6 +140,7 @@ const StationDashboard = () => {
         totalAmount={Number(totalTax)}
         onPaymentSuccess={handlePaymentSuccess}
       />
+
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
         <Button
           variant="contained"
@@ -117,10 +152,7 @@ const StationDashboard = () => {
           View Full Payment & Content History
         </Button>
       </Box>
-
-
     </Box>
-    
   );
 };
 

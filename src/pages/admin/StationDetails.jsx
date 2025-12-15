@@ -10,7 +10,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HistoryIcon from '@mui/icons-material/History';
 
 // Import our mock data
-import useStations from '../../hooks/useStations';
+import { useStationById } from '../../hooks/useStations';
 // --- IMPORT THE NEW COMPONENTS ---
 import StationChart from '../../components/StationChart';
 import PaymentSummary from '../../components/PaymentSummary';
@@ -20,12 +20,11 @@ import EnhancedContentTable from '../../components/EnhancedContentTable';
 
 
 const StationDetails = () => {
-  // 1. Get the 'id' from the URL (e.g., /admin/station/1 -> id will be '1')
+  // Get the 'id' from the URL
   const { id } = useParams();
 
-  // fetch stations
-  const { stations, loading, error } = useStations();
-  const station = loading ? null : stations.find(s => s.id === parseInt(id));
+  // Fetch ONLY this specific station
+  const { station, loading, error } = useStationById(parseInt(id));
 
   // Filter content log to show only this month's entries
   const getThisMonthContentLog = (contentLog) => {
@@ -43,7 +42,7 @@ const StationDetails = () => {
 
   const thisMonthContentLog = station ? getThisMonthContentLog(station.contentLog) : [];
 
-  if (!station) return (
+  if (loading || !station) return (
     <Container sx={{ p: 3 }}>
       <Skeleton variant="text" width={300} height={40} />
       <Skeleton variant="text" width={200} />
@@ -51,24 +50,26 @@ const StationDetails = () => {
       <Skeleton variant="rectangular" height={40} />
     </Container>
   );
-  if (error) return <Container sx={{ p: 3 }}><Typography color="error">Error: {error}</Typography></Container>;
-  // if (!station) {
-  //   return (
-  //     <Container sx={{ p: 3 }}>
-  //       <Typography variant="h5" color="error">Station not found!</Typography>
-  //       <Button 
-  //         component={Link} 
-  //         to="/admin/dashboard" 
-  //         variant="contained" 
-  //         sx={{ mt: 2 }}
-  //       >
-  //         Back to Dashboard
-  //       </Button>
-  //     </Container>
-  //   );
-  // }
 
+  if (error) return (
+    <Container sx={{ p: 3 }}>
+      <Typography color="error">Error: {error}</Typography>
+    </Container>
+  );
 
+  // if (!station) return (
+  //   <Container sx={{ p: 3 }}>
+  //     <Typography variant="h5" color="error">Station not found!</Typography>
+  //     <Button 
+  //       component={Link} 
+  //       to="/admin/dashboard" 
+  //       variant="contained" 
+  //       sx={{ mt: 2 }}
+  //     >
+  //       Back to Dashboard
+  //     </Button>
+  //   </Container>
+  // );
   // (timestamp formatting is handled by the shared table component)
 
   return (

@@ -4,7 +4,7 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Box, Autocomplete, TextField, useScrollTrigger, Slide, Skeleton } from '@mui/material';
 import RadioIcon from '@mui/icons-material/Radio';
-import useStations from '../hooks/useStations';
+import { useStationsList } from '../hooks/useStations';
 
 // Hide on scroll helper (MUI pattern)
 function HideOnScroll(props) {
@@ -21,7 +21,7 @@ const Navbar = (props) => {
   const navigate = useNavigate();
   // Get user data from localStorage
   const user = JSON.parse(localStorage.getItem('user'));
-  const { stations, loading: stationsLoading } = useStations();
+  const { stations, loading: stationsLoading } = useStationsList();
 
   const handleLogout = () => {
     // Clear user data from localStorage

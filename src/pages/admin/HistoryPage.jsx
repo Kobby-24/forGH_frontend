@@ -2,24 +2,25 @@
 
 import React, { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, TextField, TableSortLabel, Skeleton } from '@mui/material';
+import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, TextField, TableSortLabel, Skeleton, Container } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import useStations from '../../hooks/useStations';
+import { useStationById } from '../../hooks/useStations';
 
 const HistoryPage = () => {
   const { stationId } = useParams();
   const navigate = useNavigate();
-  const { stations, loading, error } = useStations();
-  const station = loading ? null : stations.find(s => s.id === parseInt(stationId));
+  
+  // Fetch ONLY this specific station
+  const { station, loading, error } = useStationById(parseInt(stationId));
 
   const [filterDate, setFilterDate] = useState(null);
 
   const filteredRecords = useMemo(() => {
-    if (loading || error) return [];
-    if (!station) return [];
+    if (loading || error || !station) return [];
+    if (!station.historicalRecords) return [];
     if (!filterDate) return station.historicalRecords; // Show all if no filter
 
     return station.historicalRecords.filter(record => {
@@ -71,7 +72,8 @@ const HistoryPage = () => {
 
   const sortedRecords = stableSort(filteredRecords.slice(), getComparator(order, orderBy));
 
-  if (!station) return (
+  // Loading state
+  if (loading || !station) return (
     <Box sx={{ p: 3 }}>
       <Skeleton variant="text" width={360} height={40} />
       <Skeleton variant="rectangular" height={48} sx={{ my: 2 }} />
@@ -80,8 +82,23 @@ const HistoryPage = () => {
       ))}
     </Box>
   );
-  if (error) return <Typography sx={{ p: 3 }} color="error">Error: {error}</Typography>;
-  // if (!station) { return <Typography sx={{ p: 3 }}>Station not found.</Typography>; }
+
+  // Error state
+  if (error) return (
+    <Container sx={{ p: 3 }}>
+      <Typography color="error">Error: {error}</Typography>
+    </Container>
+  );
+
+  // Not found state
+  // if (!station) return (
+  //   <Container sx={{ p: 3 }}>
+  //     <Typography sx={{ p: 3 }}>Station not found.</Typography>
+  //     <Button onClick={() => navigate(-1)} startIcon={<ArrowBackIcon />}>
+  //       Back to Dashboard
+  //     </Button>
+  //   </Container>
+  // );
 
   return (
     <Box sx={{ p: 3, flexGrow: 1 }}>
